@@ -1,0 +1,10 @@
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\bin\Release\UserEmulator.exe.config
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\bin\Release\eng-rus.lng
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\bin\Release\UserEmulator.exe
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\bin\Release\UserEmulator.pdb
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.FormMain.resources
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.FormCreateScript.resources
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.Properties.Resources.resources
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.csproj.GenerateResource.Cache
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.exe
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.pdb

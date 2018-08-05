@@ -74,6 +74,7 @@
             this.labelProcesses = new System.Windows.Forms.Label();
             this.checkBoxHide = new System.Windows.Forms.CheckBox();
             this.checkBoxClose = new System.Windows.Forms.CheckBox();
+            this.оПрограммеToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.groupBoxInfo.SuspendLayout();
             this.groupBoxTime.SuspendLayout();
@@ -207,7 +208,8 @@
             // настройкаToolStripMenuItem
             // 
             this.настройкаToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.языкToolStripMenuItem});
+            this.языкToolStripMenuItem,
+            this.оПрограммеToolStripMenuItem});
             this.настройкаToolStripMenuItem.Name = "настройкаToolStripMenuItem";
             this.настройкаToolStripMenuItem.Size = new System.Drawing.Size(56, 20);
             this.настройкаToolStripMenuItem.Text = "Опции";
@@ -217,7 +219,7 @@
             this.языкToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.русскийToolStripMenuItem});
             this.языкToolStripMenuItem.Name = "языкToolStripMenuItem";
-            this.языкToolStripMenuItem.Size = new System.Drawing.Size(108, 22);
+            this.языкToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.языкToolStripMenuItem.Text = "Языки";
             // 
             // русскийToolStripMenuItem
@@ -741,6 +743,13 @@
             this.checkBoxClose.Text = "Закрыть после выполнения";
             this.checkBoxClose.UseVisualStyleBackColor = true;
             // 
+            // оПрограммеToolStripMenuItem
+            // 
+            this.оПрограммеToolStripMenuItem.Name = "оПрограммеToolStripMenuItem";
+            this.оПрограммеToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.оПрограммеToolStripMenuItem.Text = "О программе";
+            this.оПрограммеToolStripMenuItem.Click += new System.EventHandler(this.оПрограммеToolStripMenuItem_Click);
+            // 
             // FormMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -822,6 +831,7 @@
         private System.Windows.Forms.ToolStripMenuItem русскийToolStripMenuItem;
         private System.Windows.Forms.Button buttonClearExeFilePath;
         private System.Windows.Forms.Button buttonClearScriptFilePath;
+        private System.Windows.Forms.ToolStripMenuItem оПрограммеToolStripMenuItem;
     }
 }
 

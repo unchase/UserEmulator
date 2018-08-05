@@ -8,3 +8,5 @@ e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.Prope
 e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.csproj.GenerateResource.Cache
 e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.exe
 e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\UserEmulator.pdb
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.csprojAssemblyReference.cache
+e:\Work\Git\UserEmulator\useremulator\SmartCursor\obj\Release\SmartCursor.csproj.CoreCompileInputs.cache

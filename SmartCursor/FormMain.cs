@@ -533,6 +533,11 @@ namespace SmartCursor
             AllFromFileLang();
         }
 
+        private void оПрограммеToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Все права на данную программу принадлежат 'unchase' (https://github.com/unchase)", "О программе UserEmulator", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         private void buttonClearExeFilePath_Click(object sender, EventArgs e)
         {
             path = "";

@@ -1,14 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
-using System.Reflection;
 using System.Diagnostics;
 using System.IO;
 
@@ -58,7 +51,7 @@ namespace SmartCursor
         #endregion
 
         private FormCreateScript formCreateScript;
-        private bool wasRun = false;
+        private bool wasRun;
         public string path = "";
         public string scriptPath = "";
         public List<string> scriptList;
@@ -95,7 +88,7 @@ namespace SmartCursor
 
         private void buttonExit_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void buttonRun_Click(object sender, EventArgs e)
@@ -106,10 +99,7 @@ namespace SmartCursor
                 run();
             else
             {
-                if (langNumber == 1)
-                    buttonRun.Text = "Перезапуск";
-                else
-                    buttonRun.Text = "Run again";
+                buttonRun.Text = langNumber == 1 ? "Перезапуск" : "Run again";
                 timerRun.Start();
             }
         }
@@ -134,16 +124,21 @@ namespace SmartCursor
             {
                 if (scriptList.Count != 0 && textBoxScriptFilePath.Text != "")
                 {
-                    Process pr = new Process();
-                    pr.StartInfo.FileName = path;
-                    pr.StartInfo.CreateNoWindow = true;
+                    var pr = new Process
+                    {
+                        StartInfo =
+                        {
+                            FileName = path,
+                            CreateNoWindow = true
+                        }
+                    };
                     pr.Start();
                     currentProcesses = Process.GetProcessesByName(pr.ProcessName);
                     if (currentProcesses.Length > 1)
                     {
                         textBoxProcessesCount.Text = currentProcesses.Length.ToString();
-                        for (int i = 0; i < currentProcesses.Length; i++)
-                            comboBoxProcesses.Items.Add(i.ToString() + " " + currentProcesses[i].ProcessName);
+                        for (var i = 0; i < currentProcesses.Length; i++)
+                            comboBoxProcesses.Items.Add(i + " " + currentProcesses[i].ProcessName);
                         comboBoxProcesses.SelectedItem = comboBoxProcesses.Items[0];
                     }
                     else
@@ -153,7 +148,7 @@ namespace SmartCursor
                 }
                 else
                 {
-                    if (MessageBox.Show("Файл сценария не был загружен.\nЗагрузить его?", "Загрузить", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    if (MessageBox.Show("Файл сценария не был загружен.\nЗагрузить его?", "Загрузить", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         загрузитьСценарийToolStripMenuItem_Click(new object(), new EventArgs());
                 }
             }
@@ -164,7 +159,7 @@ namespace SmartCursor
                 else
                 {
                     buttonStop.Enabled = false;
-                    if (MessageBox.Show("Файл сценария не был загружен.\nЗагрузить его?", "Загрузить", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                    if (MessageBox.Show("Файл сценария не был загружен.\nЗагрузить его?", "Загрузить", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                         загрузитьСценарийToolStripMenuItem_Click(new object(), new EventArgs());
                 }
             }
@@ -172,69 +167,67 @@ namespace SmartCursor
 
         private void RunScript(List<string> sList)
         {
-            if (checkBoxHide.Checked == true)
+            if (checkBoxHide.Checked)
             {
-                this.ShowInTaskbar = false;
-                this.Opacity = 0;
+                ShowInTaskbar = false;
+                Opacity = 0;
             }
             foreach (var s in sList)
             {
-                if (wasRun)
+                if (!wasRun) continue;
+                var ss = s.Split(' ');
+                switch (ss[2])
                 {
-                    var ss = s.Split(' ');
-                    switch (ss[2])
-                    {
-                        case "WAIT":
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "LMOUSE1":
-                            MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "RMOUSE1":
-                            MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "MMOUSE1":
-                            MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "LMOUSE2":
-                            MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "RMOUSE2":
-                            MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "MMOUSE2":
-                            MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                        case "N":
-                            // не было выбрано событие, то есть считаем, что его нет
-                            Wait(0);
-                            break;
-                        default:
-                            KeyboardPressKey(ss[2]);
-                            Wait(Convert.ToInt32(ss[3]));
-                            break;
-                    }
+                    case "WAIT":
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "LMOUSE1":
+                        MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "RMOUSE1":
+                        MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "MMOUSE1":
+                        MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "LMOUSE2":
+                        MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        MouseLeftClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "RMOUSE2":
+                        MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        MouseRightClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "MMOUSE2":
+                        MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        MouseMiddleClick(Convert.ToInt32(ss[0]), Convert.ToInt32(ss[1]));
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
+                    case "N":
+                        // не было выбрано событие, то есть считаем, что его нет
+                        Wait(0);
+                        break;
+                    default:
+                        KeyboardPressKey(ss[2]);
+                        Wait(Convert.ToInt32(ss[3]));
+                        break;
                 }
             }
             buttonStop.Enabled = false;
             buttonRunProcess.Enabled = false;
-            if (checkBoxHide.Checked == true && checkBoxClose.Checked == false)
-                this.Opacity = 100;
+            if (checkBoxHide.Checked && !checkBoxClose.Checked)
+                Opacity = 100;
             else
                 MessageBox.Show("Скрипт " + scriptPath + " был исполнен!", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            if (checkBoxClose.Checked == true)
-                this.Close();
+            if (checkBoxClose.Checked)
+                Close();
             else
-                if (ShowInTaskbar == false)
+                if (!ShowInTaskbar)
                     ShowInTaskbar = true;
         }
 
@@ -242,19 +235,19 @@ namespace SmartCursor
         private void MouseLeftClick(int x, int y)
         {
             SetCursorPos(x, y);
-            mouse_event(MouseEvent.MOUSEEVENTF_LEFTDOWN | MouseEvent.MOUSEEVENTF_LEFTUP, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y, 0, 0);  
+            mouse_event(MouseEvent.MOUSEEVENTF_LEFTDOWN | MouseEvent.MOUSEEVENTF_LEFTUP, Cursor.Position.X, Cursor.Position.Y, 0, 0);  
         }
 
         private void MouseRightClick(int x, int y)
         {
             SetCursorPos(x, y);
-            mouse_event(MouseEvent.MOUSEEVENTF_RIGHTDOWN | MouseEvent.MOUSEEVENTF_RIGHTUP, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y, 0, 0);
+            mouse_event(MouseEvent.MOUSEEVENTF_RIGHTDOWN | MouseEvent.MOUSEEVENTF_RIGHTUP, Cursor.Position.X, Cursor.Position.Y, 0, 0);
         }
 
         private void MouseMiddleClick(int x, int y)
         {
             SetCursorPos(x, y);
-            mouse_event(MouseEvent.MOUSEEVENTF_MIDDLEDOWN | MouseEvent.MOUSEEVENTF_MIDDLEUP, System.Windows.Forms.Cursor.Position.X, System.Windows.Forms.Cursor.Position.Y, 0, 0);
+            mouse_event(MouseEvent.MOUSEEVENTF_MIDDLEDOWN | MouseEvent.MOUSEEVENTF_MIDDLEUP, Cursor.Position.X, Cursor.Position.Y, 0, 0);
         }
 
         private void Wait(int millisec)
@@ -284,7 +277,7 @@ namespace SmartCursor
 
         private bool CheckProgram(string apps)
         {
-            int hWnd = FindWindow(null, apps);
+            var hWnd = FindWindow(null, apps);
             if (hWnd > 0)
             {
                 SetForegroundWindow(hWnd);
@@ -301,8 +294,8 @@ namespace SmartCursor
         {
             if (wasRun)
             {
-                textBoxMousePositionX.Text = System.Windows.Forms.Cursor.Position.X.ToString();
-                textBoxMousePositionY.Text = System.Windows.Forms.Cursor.Position.Y.ToString();
+                textBoxMousePositionX.Text = Cursor.Position.X.ToString();
+                textBoxMousePositionY.Text = Cursor.Position.Y.ToString();
             }
         }
 
@@ -318,7 +311,7 @@ namespace SmartCursor
 
         private void выходToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void создатьСценарийToolStripMenuItem_Click(object sender, EventArgs e)
@@ -329,30 +322,30 @@ namespace SmartCursor
 
         private void загрузитьСценарийToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openScriptFileDialog = new OpenFileDialog();
-            openScriptFileDialog.Filter = "dat files (*.dat)|*.dat";
-            openScriptFileDialog.FilterIndex = 1;
-            openScriptFileDialog.RestoreDirectory = true;
-            if (openScriptFileDialog.ShowDialog() == DialogResult.OK)
+            var openScriptFileDialog = new OpenFileDialog
             {
-                try
+                Filter = @"dat files (*.dat)|*.dat",
+                FilterIndex = 1,
+                RestoreDirectory = true
+            };
+            if (openScriptFileDialog.ShowDialog() != DialogResult.OK) return;
+            try
+            {
+                var sr = new StreamReader(openScriptFileDialog.FileName);
+                using (sr)
                 {
-                    StreamReader sr = new StreamReader(openScriptFileDialog.FileName);
-                    using (sr)
-                    {
-                        scriptPath = openScriptFileDialog.FileName;
-                        scriptList.Clear();
-                        while (!sr.EndOfStream)
-                            scriptList.Add(sr.ReadLine());
-                        textBoxScriptFilePath.Text = scriptPath;
-                        MessageBox.Show("Файл сценария " + scriptPath + " был загружен.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    sr.Close();
+                    scriptPath = openScriptFileDialog.FileName;
+                    scriptList.Clear();
+                    while (!sr.EndOfStream)
+                        scriptList.Add(sr.ReadLine());
+                    textBoxScriptFilePath.Text = scriptPath;
+                    MessageBox.Show("Файл сценария " + scriptPath + " был загружен.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
-                }
+                sr.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
             }
         }
 
@@ -363,31 +356,27 @@ namespace SmartCursor
 
         private void buttonOpenExeFilePath_Click(object sender, EventArgs e)
         {
-            Stream choseFileStream = null;
-            OpenFileDialog choseFileDialog = new OpenFileDialog();
-            choseFileDialog.Filter = "exe files (*.exe)|*.exe|All files (*.*)|*.*";
-            choseFileDialog.FilterIndex = 1;
-            choseFileDialog.RestoreDirectory = true;
-            if (choseFileDialog.ShowDialog() == DialogResult.OK)
+            var choseFileDialog = new OpenFileDialog
             {
-                try
+                Filter = @"exe files (*.exe)|*.exe|All files (*.*)|*.*",
+                FilterIndex = 1,
+                RestoreDirectory = true
+            };
+            if (choseFileDialog.ShowDialog() != DialogResult.OK) return;
+            try
+            {
+                using (var choseFileStream = choseFileDialog.OpenFile())
                 {
-                    if ((choseFileStream = choseFileDialog.OpenFile()) != null)
-                    {
-                        using (choseFileStream)
-                        {
-                            path = choseFileDialog.FileName;
-                            textBoxExeFilePath.Text = choseFileDialog.FileName;
-                            textBoxProcessesCount.Text = "";
-                            comboBoxProcesses.Items.Clear();
-                            MessageBox.Show(" Исполняемый файл " + path + " был загружен.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);   
-                        }
-                    }
+                    path = choseFileDialog.FileName;
+                    textBoxExeFilePath.Text = choseFileDialog.FileName;
+                    textBoxProcessesCount.Text = "";
+                    comboBoxProcesses.Items.Clear();
+                    MessageBox.Show(" Исполняемый файл " + path + " был загружен.", "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);   
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
             }
         }
 
@@ -404,10 +393,7 @@ namespace SmartCursor
             else
                 if (Convert.ToInt32(DateTime.Now.Day.ToString()) > Convert.ToInt32(comboBoxDay.SelectedItem.ToString()) || Convert.ToInt32(DateTime.Now.Month.ToString()) > Convert.ToInt32(comboBoxMonth.SelectedItem.ToString()) || Convert.ToInt32(DateTime.Now.Year.ToString()) > Convert.ToInt32(comboBoxYear.SelectedItem.ToString()))
                 {
-                    if (langNumber == 1)
-                        buttonRun.Text = "Запуск";
-                    else
-                        buttonRun.Text = "Run";
+                    buttonRun.Text = langNumber == 1 ? "Запуск" : "Run";
                     timerRun.Stop();
                     MessageBox.Show("Выбранный год, месяц или день уже прошел. Поменяйте время запуска.", "Информация.", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
@@ -419,10 +405,7 @@ namespace SmartCursor
                     else
                         if (Convert.ToInt32(comboBoxHours.SelectedItem.ToString()) < DateTime.Now.Hour)
                         {
-                            if (langNumber == 1)
-                                buttonRun.Text = "Запуск";
-                            else
-                                buttonRun.Text = "Run";
+                            buttonRun.Text = langNumber == 1 ? "Запуск" : "Run";
                             timerRun.Stop();
                             MessageBox.Show("Выбранный час уже прошел. Поменяйте время запуска.", "Информация.", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             return;
@@ -433,10 +416,7 @@ namespace SmartCursor
                             else
                                 if (Convert.ToInt32(comboBoxMinutes.SelectedItem.ToString()) < DateTime.Now.Minute)
                                 {
-                                    if (langNumber == 1)
-                                        buttonRun.Text = "Запуск";
-                                    else
-                                        buttonRun.Text = "Run";
+                                    buttonRun.Text = langNumber == 1 ? "Запуск" : "Run";
                                     timerRun.Stop();
                                     MessageBox.Show("Выбранная минута уже прошла. Поменяйте время запуска.", "Информация.", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                     return;
@@ -447,20 +427,14 @@ namespace SmartCursor
                                     else
                                         if (Convert.ToInt32(comboBoxSeconds.SelectedItem.ToString()) < DateTime.Now.Second)
                                         {
-                                            if (langNumber == 1)
-                                                buttonRun.Text = "Запуск";
-                                            else
-                                                buttonRun.Text = "Run";
+                                            buttonRun.Text = langNumber == 1 ? "Запуск" : "Run";
                                             timerRun.Stop();
                                             MessageBox.Show("Выбранная секунда уже прошла. Поменяйте время запуска.", "Информация.", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                             return;
                                         }
                                         else
                                         {
-                                            if (langNumber == 1)
-                                                buttonRun.Text = "Запуск";
-                                            else
-                                                buttonRun.Text = "Run";
+                                            buttonRun.Text = langNumber == 1 ? "Запуск" : "Run";
                                             run();
                                         }
                 }
@@ -468,23 +442,22 @@ namespace SmartCursor
 
         private void comboBoxProcesses_SelectedIndexChanged(object sender, EventArgs e)
         {
-            string s = comboBoxProcesses.SelectedItem.ToString();
+            var s = comboBoxProcesses.SelectedItem.ToString();
             var ss = s.Split(' ');
-            int indexOfProcess = 0;
-            if (int.TryParse(ss[0], out indexOfProcess))
+            if (int.TryParse(ss[0], out var indexOfProcess))
                 currentProcess = currentProcesses[indexOfProcess];
             //MessageBox.Show(indexOfProcess.ToString());
         }
 
         public void AllFromFileLang()
         {
-            foreach (var cont in this.Controls)
+            foreach (var cont in Controls)
                 TranslateTextInControl(cont.GetType().ToString(), cont);
         }
 
         public void TranslateTextInControl(string typeOfControl, Object obj)
         {
-            string translateText = "";
+            string translateText;
             switch (typeOfControl)
             {
                 case "System.Windows.Forms.GroupBox":
@@ -522,13 +495,12 @@ namespace SmartCursor
         {
             try
             {
-                StreamReader sr = new StreamReader(nameOfLangFile);
+                var sr = new StreamReader(nameOfLangFile);
                 using (sr)
                 {
-                    string currString = "";
                     while (!sr.EndOfStream)
                     {
-                        currString = sr.ReadLine();
+                        var currString = sr.ReadLine();
                         var ss = currString.Split('=');
                         if (ss[0] == text)
                             return ss[1];

@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -25,8 +20,8 @@ namespace SmartCursor
 
         private static IntPtr SetHook(LowLevelMouseProc proc)
         {
-            using (Process curProcess = Process.GetCurrentProcess())
-            using (ProcessModule curModule = curProcess.MainModule)
+            using (var curProcess = Process.GetCurrentProcess())
+            using (var curModule = curProcess.MainModule)
             {
                 return SetWindowsHookEx(WH_MOUSE_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
             }
@@ -38,7 +33,7 @@ namespace SmartCursor
         {
             if (nCode >= 0 && MouseMessages.WM_LBUTTONDOWN == (MouseMessages)wParam)
             {
-                MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
+                var hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
                 result = "X = " + hookStruct.pt.x + "  Y = " + hookStruct.pt.y;
             }
             return CallNextHookEx(_hookID, nCode, wParam, lParam);
@@ -89,7 +84,7 @@ namespace SmartCursor
         private static extern IntPtr GetModuleHandle(string lpModuleName);
         #endregion
 
-        private FormMain formMain;
+        private readonly FormMain formMain;
         private int lastIndex = -1;
         public int langNumber2 = 1;
 
@@ -104,10 +99,12 @@ namespace SmartCursor
                     listBoxScript.Items.Add(s.ToString());
             }
             _hookID = SetHook(_proc);
-            Timer tmr = new Timer();
-            tmr.Interval = 20;
-            tmr.Enabled = true;
-            tmr.Tick += delegate { textBoxMousePosition.Text = FormCreateScript.result; };
+            var tmr = new Timer
+            {
+                Interval = 20,
+                Enabled = true
+            };
+            tmr.Tick += delegate { textBoxMousePosition.Text = result; };
             switch(f.langNumber)
             {
                 case 1:
@@ -130,14 +127,13 @@ namespace SmartCursor
 
         public void AllFromFileLang()
         {
-            foreach (var cont in this.Controls)
+            foreach (var cont in Controls)
                 formMain.TranslateTextInControl(cont.GetType().ToString(), cont);
         }
 
         private void buttonChoseFile_Click(object sender, EventArgs e)
         {
-            Stream choseFileStream = null;
-            OpenFileDialog choseFileDialog = new OpenFileDialog();
+            var choseFileDialog = new OpenFileDialog();
             choseFileDialog.Filter = "exe files (*.exe)|*.exe|All files (*.*)|*.*";
             choseFileDialog.FilterIndex = 1;
             choseFileDialog.RestoreDirectory = true;
@@ -145,31 +141,29 @@ namespace SmartCursor
             {
                 try
                 {
-                    if ((choseFileStream = choseFileDialog.OpenFile()) != null)
+
+                    using (var choseFileStream = choseFileDialog.OpenFile())
                     {
-                        using (choseFileStream)
+                        textBoxFilePath.Text = choseFileDialog.FileName;
+                        var fi = new FileInfo(choseFileDialog.FileName);
+                        if (langNumber2 == 1)
                         {
-                            textBoxFilePath.Text = choseFileDialog.FileName;
-                            FileInfo fi = new FileInfo(choseFileDialog.FileName);
-                            if (langNumber2 == 1)
-                            {
-                                labelCreationTime.Text = "Время создания: " + fi.CreationTime.ToString();
-                                labelExtension.Text = "Расширение: " + fi.Extension;
-                                labelLastAccessTime.Text = "Последнее обращение: " + fi.LastAccessTime.ToString();
-                                labelLastWriteTime.Text = "Последняя запись: " + fi.LastWriteTime.ToString();
-                                labelLength.Text = "Размер в байтах: " + fi.Length.ToString();
-                            }
-                            else
-                            {
-                                labelCreationTime.Text = "Creation time: " + fi.CreationTime.ToString();
-                                labelExtension.Text = "Extension: " + fi.Extension;
-                                labelLastAccessTime.Text = "Last access time: " + fi.LastAccessTime.ToString();
-                                labelLastWriteTime.Text = "Last write time: " + fi.LastWriteTime.ToString();
-                                labelLength.Text = "Length in bytes: " + fi.Length.ToString();
-                            }
-                            formMain.tbP.Text = "";
-                            formMain.cbP.Items.Clear();
+                            labelCreationTime.Text = "Время создания: " + fi.CreationTime.ToString();
+                            labelExtension.Text = "Расширение: " + fi.Extension;
+                            labelLastAccessTime.Text = "Последнее обращение: " + fi.LastAccessTime.ToString();
+                            labelLastWriteTime.Text = "Последняя запись: " + fi.LastWriteTime.ToString();
+                            labelLength.Text = "Размер в байтах: " + fi.Length.ToString();
                         }
+                        else
+                        {
+                            labelCreationTime.Text = "Creation time: " + fi.CreationTime.ToString();
+                            labelExtension.Text = "Extension: " + fi.Extension;
+                            labelLastAccessTime.Text = "Last access time: " + fi.LastAccessTime.ToString();
+                            labelLastWriteTime.Text = "Last write time: " + fi.LastWriteTime.ToString();
+                            labelLength.Text = "Length in bytes: " + fi.Length.ToString();
+                        }
+                        formMain.tbP.Text = "";
+                        formMain.cbP.Items.Clear();
                     }
                 }
                 catch (Exception ex)
@@ -181,9 +175,9 @@ namespace SmartCursor
 
         private void отменаToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Применить изменения?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+            if (MessageBox.Show("Применить изменения?", "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 применитьToolStripMenuItem_Click(sender, e);
-            this.Close();
+            Close();
         }
 
         private void применитьToolStripMenuItem_Click(object sender, EventArgs e)
@@ -194,10 +188,10 @@ namespace SmartCursor
             formMain.tb2.Text = textBoxScriptPath.Text;
             switch (MessageBox.Show("Сохранить изменённый сценарий?", "Сохранение", MessageBoxButtons.YesNo, MessageBoxIcon.Question))
             {
-                case System.Windows.Forms.DialogResult.Yes:
+                case DialogResult.Yes:
                     сохранитьToolStripMenuItem2_Click(sender, e);
                     break;
-                case System.Windows.Forms.DialogResult.No:
+                case DialogResult.No:
                     
                     break;
             }
@@ -223,17 +217,14 @@ namespace SmartCursor
 
         private void comboBoxEvent_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (comboBoxEvent.SelectedItem.ToString() == "Нажатие клавиши")
-                comboBoxKey.Enabled = true;
-            else
-                comboBoxKey.Enabled = false;
+            comboBoxKey.Enabled = comboBoxEvent.SelectedItem.ToString() == "Нажатие клавиши";
         }
 
         private void buttonDeleteFromScript_Click(object sender, EventArgs e)
         {
             if (checkBoxSelectionMode.Checked)
             {
-                for (int i = 0; i < listBoxScript.Items.Count; i++)
+                for (var i = 0; i < listBoxScript.Items.Count; i++)
                     if (listBoxScript.Items[i] == listBoxScript.SelectedItem)
                     {
                         listBoxScript.Items.Remove(listBoxScript.SelectedItem);
@@ -242,23 +233,22 @@ namespace SmartCursor
             }
             else
                 listBoxScript.Items.Remove(listBoxScript.SelectedItem);
-            if (checkBoxTakeAll.Checked)
-            {
-                checkBoxTakeAll.Checked = false;
-                checkBoxTakeAll.Checked = true;
-            }
+
+            if (!checkBoxTakeAll.Checked) return;
+            checkBoxTakeAll.Checked = false;
+            checkBoxTakeAll.Checked = true;
         }
 
         private void buttonAddToScript_Click(object sender, EventArgs e)
         {
-            string userEvent = GetEventFromComboBox();
+            var userEvent = GetEventFromComboBox();
             if (listBoxScript.SelectedItems.Count > 0)
             {
                 if (checkBoxSelectionMode.Checked)
                 {
-                    int i = 0;
-                    List<string> ls = new List<string>();
-                    ListBox.SelectedObjectCollection sc = new ListBox.SelectedObjectCollection(listBoxScript);
+                    var i = 0;
+                    var ls = new List<string>();
+                    var sc = new ListBox.SelectedObjectCollection(listBoxScript);
                     while (i < listBoxScript.Items.Count)
                     {
                         if (!sc.Contains(listBoxScript.Items[i]))
@@ -279,8 +269,8 @@ namespace SmartCursor
                 }
                 else
                 {
-                    List<string> tempList = new List<string>();
-                    for (int i = 0; i < listBoxScript.Items.Count; i++)
+                    var tempList = new List<string>();
+                    for (var i = 0; i < listBoxScript.Items.Count; i++)
                     {
                         if (listBoxScript.Items[i] == listBoxScript.SelectedItem)
                         {
@@ -307,8 +297,7 @@ namespace SmartCursor
 
         private int CheckValueInTextBox(TextBox t, long maxValue)
         {
-            int val;
-            if (t.Text == "" || !int.TryParse(t.Text, out val))
+            if (t.Text == "" || !int.TryParse(t.Text, out var val))
                 val = 0;
             else
                 val = Convert.ToInt32(t.Text);
@@ -363,49 +352,49 @@ namespace SmartCursor
 
         private void сохранитьToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            SaveFileDialog saveScriptToFileDialog = new SaveFileDialog();
-            saveScriptToFileDialog.Filter = "dat files (*.dat)|*.dat";
-            saveScriptToFileDialog.FilterIndex = 1;
-            saveScriptToFileDialog.RestoreDirectory = true;
-            saveScriptToFileDialog.AddExtension = true;
-            saveScriptToFileDialog.DefaultExt = ".dat";
-            if (saveScriptToFileDialog.ShowDialog() == DialogResult.OK)
+            var saveScriptToFileDialog = new SaveFileDialog
             {
-                StreamWriter sr = new StreamWriter(saveScriptToFileDialog.FileName);
-                foreach (var str in listBoxScript.Items)
-                    sr.WriteLine(str.ToString());
-                textBoxScriptPath.Text = saveScriptToFileDialog.FileName;
-                formMain.scriptPath = saveScriptToFileDialog.FileName;
-                MessageBox.Show("Сценарий сохранён в Файл: " + saveScriptToFileDialog.FileName, "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                sr.Close();
-            }
+                Filter = @"dat files (*.dat)|*.dat",
+                FilterIndex = 1,
+                RestoreDirectory = true,
+                AddExtension = true,
+                DefaultExt = ".dat"
+            };
+            if (saveScriptToFileDialog.ShowDialog() != DialogResult.OK) return;
+            var sr = new StreamWriter(saveScriptToFileDialog.FileName);
+            foreach (var str in listBoxScript.Items)
+                sr.WriteLine(str);
+            textBoxScriptPath.Text = saveScriptToFileDialog.FileName;
+            formMain.scriptPath = saveScriptToFileDialog.FileName;
+            MessageBox.Show("Сценарий сохранён в Файл: " + saveScriptToFileDialog.FileName, "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            sr.Close();
         }
 
         private void открытьToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            OpenFileDialog openScriptFileDialog = new OpenFileDialog();
-            openScriptFileDialog.Filter = "dat files (*.dat)|*.dat";
-            openScriptFileDialog.FilterIndex = 1;
-            openScriptFileDialog.RestoreDirectory = true;
-            if (openScriptFileDialog.ShowDialog() == DialogResult.OK)
+            var openScriptFileDialog = new OpenFileDialog
             {
-                try
+                Filter = @"dat files (*.dat)|*.dat",
+                FilterIndex = 1,
+                RestoreDirectory = true
+            };
+            if (openScriptFileDialog.ShowDialog() != DialogResult.OK) return;
+            try
+            {
+                var sr = new StreamReader(openScriptFileDialog.FileName);
+                using (sr)
                 {
-                    StreamReader sr = new StreamReader(openScriptFileDialog.FileName);
-                    using (sr)
-                    {
-                        listBoxScript.Items.Clear();
-                        while (!sr.EndOfStream)
-                            listBoxScript.Items.Add(sr.ReadLine());
-                        textBoxScriptPath.Text = openScriptFileDialog.FileName;
-                        MessageBox.Show("Сценарий загружен из Файла: " + openScriptFileDialog.FileName, "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    }
-                    sr.Close();
+                    listBoxScript.Items.Clear();
+                    while (!sr.EndOfStream)
+                        listBoxScript.Items.Add(sr.ReadLine());
+                    textBoxScriptPath.Text = openScriptFileDialog.FileName;
+                    MessageBox.Show("Сценарий загружен из Файла: " + openScriptFileDialog.FileName, "Информация", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
-                }
+                sr.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
             }
         }
 
@@ -413,30 +402,25 @@ namespace SmartCursor
         {
             textBoxFilePath.Text = formMain.path;
             textBoxScriptPath.Text = formMain.scriptPath;
-            if (formMain.path != "")
+            if (formMain.path == "") return;
+            try
             {
-                try
-                {
-                    FileInfo fi = new FileInfo(formMain.path);
-                    labelCreationTime.Text = "Время создания: " + fi.CreationTime.ToString();
-                    labelExtension.Text = "Расширение: " + fi.Extension;
-                    labelLastAccessTime.Text = "Последнее обращение: " + fi.LastAccessTime.ToString();
-                    labelLastWriteTime.Text = "Последняя запись: " + fi.LastWriteTime.ToString();
-                    labelLength.Text = "Размер в байтах: " + fi.Length.ToString();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
-                }
+                var fi = new FileInfo(formMain.path);
+                labelCreationTime.Text = "Время создания: " + fi.CreationTime.ToString();
+                labelExtension.Text = "Расширение: " + fi.Extension;
+                labelLastAccessTime.Text = "Последнее обращение: " + fi.LastAccessTime.ToString();
+                labelLastWriteTime.Text = "Последняя запись: " + fi.LastWriteTime.ToString();
+                labelLength.Text = "Размер в байтах: " + fi.Length.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка: Файл не может быть считан с диска. Оригинальная ошибка: " + ex.Message);
             }
         }
 
         private void checkBoxSelectionMode_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkBoxSelectionMode.Checked)
-                listBoxScript.SelectionMode = SelectionMode.MultiSimple;
-            else
-                listBoxScript.SelectionMode = SelectionMode.One;
+            listBoxScript.SelectionMode = checkBoxSelectionMode.Checked ? SelectionMode.MultiSimple : SelectionMode.One;
         }
 
         private void buttonEditInScript_Click(object sender, EventArgs e)
@@ -446,16 +430,15 @@ namespace SmartCursor
             {
                 selectedIndices.Add(index);
             }
-            foreach (int index in selectedIndices)
+            foreach (var index in selectedIndices)
             {
-                string userEvent = GetEventFromComboBox();
+                var userEvent = GetEventFromComboBox();
                 listBoxScript.Items[index] = CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width).ToString() + " " + CheckValueInTextBox(textBoxMousePosY, SystemInformation.PrimaryMonitorSize.Height).ToString() + " " + userEvent + " " + CheckValueInTextBox(textBoxWaitMilliseconds, 1000 * 60 * 60 * 24).ToString();              
             }
-            if (checkBoxTakeAll.Checked)
-            {
-                checkBoxTakeAll.Checked = false;
-                checkBoxTakeAll.Checked = true;
-            }
+
+            if (!checkBoxTakeAll.Checked) return;
+            checkBoxTakeAll.Checked = false;
+            checkBoxTakeAll.Checked = true;
         }
 
         private void buttonChoseScriptFile_Click(object sender, EventArgs e)
@@ -465,71 +448,66 @@ namespace SmartCursor
 
         private void listBoxScript_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (!checkBoxSelectionMode.Checked && listBoxScript.SelectedItem != null)
+            if (checkBoxSelectionMode.Checked || listBoxScript.SelectedItem == null) return;
+            var selectedString = listBoxScript.SelectedItem.ToString();
+            var ssS = selectedString.Split(' ');
+            if (ssS.Length != 4) return;
+            textBoxMousePosX.Text = ssS[0];
+            textBoxMousePosY.Text = ssS[1];
+            switch (ssS[2])
             {
-                string selectedString = listBoxScript.SelectedItem.ToString();
-                var ssS = selectedString.Split(' ');
-                if (ssS.Length == 4)
-                {
-                    textBoxMousePosX.Text = ssS[0];
-                    textBoxMousePosY.Text = ssS[1];
-                    switch (ssS[2])
-                    {
-                        case "WAIT":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[0];
-                            break;
-                        case "LMOUSE1":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[1];
-                            break;
-                        case "RMOUSE1":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[2];
-                            break;
-                        case "MMOUSE1":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[3];
-                            break;
-                        case "LMOUSE2":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[4];
-                            break;
-                        case "RMOUSE2":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[5];
-                            break;
-                        case "MMOUSE2":
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[6];
-                            break;
-                        case "N":
+                case "WAIT":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[0];
+                    break;
+                case "LMOUSE1":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[1];
+                    break;
+                case "RMOUSE1":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[2];
+                    break;
+                case "MMOUSE1":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[3];
+                    break;
+                case "LMOUSE2":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[4];
+                    break;
+                case "RMOUSE2":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[5];
+                    break;
+                case "MMOUSE2":
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[6];
+                    break;
+                case "N":
                             
-                            break;
-                        default:
-                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[7];
-                            StringBuilder sb = null;
-                            if (ssS[2][0] != '{')
-                            {
-                                switch (ssS[2][0])
-                                {
-                                    case '%':
-                                        radioButtonALT.Checked = true;
-                                        break;
-                                    case '^':
-                                        radioButtonCTRL.Checked = true;
-                                        break;
-                                    case '+':
-                                        radioButtonSHIFT.Checked = true;
-                                        break;
-                                }
-                            }
-                            else
-                                radioButtonNo.Checked = true;
-                            if (radioButtonNo.Checked || (!radioButtonNo.Checked && !radioButtonALT.Checked && !radioButtonCTRL.Checked && !radioButtonSHIFT.Checked))
-                                sb = new StringBuilder(ssS[2], 1, ssS[2].Length - 2, ssS[2].Length - 2);
-                            if (radioButtonALT.Checked || radioButtonCTRL.Checked || radioButtonSHIFT.Checked)
-                                sb = new StringBuilder(ssS[2], 2, ssS[2].Length - 3, ssS[2].Length - 3);
-                            comboBoxKey.SelectedItem = comboBoxKey.Items[comboBoxKey.FindStringExact(sb.ToString())];
-                            break;
+                    break;
+                default:
+                    comboBoxEvent.SelectedItem = comboBoxEvent.Items[7];
+                    StringBuilder sb = null;
+                    if (ssS[2][0] != '{')
+                    {
+                        switch (ssS[2][0])
+                        {
+                            case '%':
+                                radioButtonALT.Checked = true;
+                                break;
+                            case '^':
+                                radioButtonCTRL.Checked = true;
+                                break;
+                            case '+':
+                                radioButtonSHIFT.Checked = true;
+                                break;
+                        }
                     }
-                    textBoxWaitMilliseconds.Text = ssS[3];
-                }
-
+                    else
+                        radioButtonNo.Checked = true;
+                    if (radioButtonNo.Checked || (!radioButtonNo.Checked && !radioButtonALT.Checked && !radioButtonCTRL.Checked && !radioButtonSHIFT.Checked))
+                        sb = new StringBuilder(ssS[2], 1, ssS[2].Length - 2, ssS[2].Length - 2);
+                    if (radioButtonALT.Checked || radioButtonCTRL.Checked || radioButtonSHIFT.Checked)
+                        sb = new StringBuilder(ssS[2], 2, ssS[2].Length - 3, ssS[2].Length - 3);
+                    comboBoxKey.SelectedItem = comboBoxKey.Items[comboBoxKey.FindStringExact(sb.ToString())];
+                    break;
             }
+            textBoxWaitMilliseconds.Text = ssS[3];
         }
 
         private void сохранитьToolStripMenuItem2_Click(object sender, EventArgs e)
@@ -538,9 +516,9 @@ namespace SmartCursor
                 сохранитьToolStripMenuItem1_Click(sender, e);
             else
             {
-                if (MessageBox.Show("Вы действительно хотите сохранить сценарий в файл:\n" + formMain.scriptPath, "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == System.Windows.Forms.DialogResult.Yes)
+                if (MessageBox.Show("Вы действительно хотите сохранить сценарий в файл:\n" + formMain.scriptPath, "Внимание", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    StreamWriter sr = new StreamWriter(formMain.scriptPath);
+                    var sr = new StreamWriter(formMain.scriptPath);
                     foreach (var str in listBoxScript.Items)
                         sr.WriteLine(str.ToString());
                     textBoxScriptPath.Text = formMain.scriptPath;
@@ -568,13 +546,12 @@ namespace SmartCursor
 
         private void buttonDoN_Click(object sender, EventArgs e)
         {
-            int count = 0;
             if (listBoxScript.SelectedIndex != null)
             {
-                if (int.TryParse(textBoxDoN.Text, out count))
+                if (int.TryParse(textBoxDoN.Text, out var count))
                 {
                     listBoxScript.SelectedItems.Clear();
-                    for (int i = 0; i < count; i++)
+                    for (var i = 0; i < count; i++)
                         buttonAddToScript_Click(sender, e);
                 }
                 else
@@ -593,7 +570,7 @@ namespace SmartCursor
             if (checkBoxTakeAll.Checked)
             {
                 checkBoxSelectionMode.Checked = true;
-                for (int i = 0; i < listBoxScript.Items.Count; i++)
+                for (var i = 0; i < listBoxScript.Items.Count; i++)
                     listBoxScript.SelectedItems.Add(listBoxScript.Items[i]);
             }
             else
@@ -612,10 +589,10 @@ namespace SmartCursor
                 {
                     listBoxScriptTemp.Add(item.ToString());
                 }
-                bool wasContained = false;
-                int i = 0;
-                List<string> ls = new List<string>();
-                ListBox.SelectedObjectCollection sc = new ListBox.SelectedObjectCollection(listBoxScript);
+                var wasContained = false;
+                var i = 0;
+                var ls = new List<string>();
+                var sc = new ListBox.SelectedObjectCollection(listBoxScript);
                 while (i < listBoxScript.Items.Count)
                 {
                     if (!sc.Contains(listBoxScript.Items[i]))
@@ -628,25 +605,21 @@ namespace SmartCursor
                         wasContained = true;
                         ls.Add(listBoxScript.Items[i].ToString());
                         listBoxScript.Items.Remove(listBoxScript.Items[i]);
-                        string str = textBoxInputString.Text;
-                        if (str != "")
+                        var str = textBoxInputString.Text;
+                        if (str == "") continue;
+                        for (var j = 0; j < str.Length; j++)
                         {
-                            for (int j = 0; j < str.Length; j++)
-                            {
-                                textBoxMousePosX.Text = "0";
-                                textBoxMousePosY.Text = "0";
-                                textBoxWaitMilliseconds.Text = "100";
-                                comboBoxEvent.SelectedItem = comboBoxEvent.Items[7];
-                                comboBoxKey.SelectedItem =
-                                    comboBoxKey.Items[comboBoxKey.FindStringExact(str[j].ToString())];
-                                string userEvent = GetEventFromComboBox();
-                                ls.Add(
-                                    CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width)
-                                        .ToString() + " " +
-                                    CheckValueInTextBox(textBoxMousePosY, SystemInformation.PrimaryMonitorSize.Height)
-                                        .ToString() + " " + userEvent + " " +
-                                    CheckValueInTextBox(textBoxWaitMilliseconds, 1000*60*60*24).ToString());
-                            }
+                            textBoxMousePosX.Text = "0";
+                            textBoxMousePosY.Text = "0";
+                            textBoxWaitMilliseconds.Text = "100";
+                            comboBoxEvent.SelectedItem = comboBoxEvent.Items[7];
+                            comboBoxKey.SelectedItem =
+                                comboBoxKey.Items[comboBoxKey.FindStringExact(str[j].ToString())];
+                            var userEvent = GetEventFromComboBox();
+                            ls.Add(
+                                CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width) + " " +
+                                CheckValueInTextBox(textBoxMousePosY, SystemInformation.PrimaryMonitorSize.Height) + " " + userEvent + " " +
+                                CheckValueInTextBox(textBoxWaitMilliseconds, 1000*60*60*24).ToString());
                         }
                     }
                 }
@@ -655,10 +628,10 @@ namespace SmartCursor
                     listBoxScript.Items.Add(s);
                 if (!wasContained)
                 {
-                    string str = textBoxInputString.Text;
+                    var str = textBoxInputString.Text;
                     if (str != "")
                     {
-                        for (int j = 0; j < str.Length; j++)
+                        for (var j = 0; j < str.Length; j++)
                         {
                             textBoxMousePosX.Text = "0";
                             textBoxMousePosY.Text = "0";
@@ -684,24 +657,20 @@ namespace SmartCursor
                                 {
                                     comboBoxKey.SelectedItem =
                                         comboBoxKey.Items[comboBoxKey.FindStringExact(str[j].ToString())];
-                                    string userEvent = GetEventFromComboBox();
+                                    var userEvent = GetEventFromComboBox();
                                     listBoxScript.Items.Add(
-                                        CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width)
-                                            .ToString() + " " +
+                                        CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width) + " " +
                                         CheckValueInTextBox(textBoxMousePosY,
-                                            SystemInformation.PrimaryMonitorSize.Height)
-                                            .ToString() + " " + userEvent + " " +
-                                        CheckValueInTextBox(textBoxWaitMilliseconds, 1000*60*60*24).ToString());
+                                            SystemInformation.PrimaryMonitorSize.Height) + " " + userEvent + " " +
+                                        CheckValueInTextBox(textBoxWaitMilliseconds, 1000*60*60*24));
                                 }
                             }
-                            string userEvent2 = GetEventFromComboBox();
+                            var userEvent2 = GetEventFromComboBox();
                             listBoxScript.Items.Add(
-                                CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width)
-                                    .ToString() + " " +
+                                CheckValueInTextBox(textBoxMousePosX, SystemInformation.PrimaryMonitorSize.Width) + " " +
                                 CheckValueInTextBox(textBoxMousePosY,
-                                    SystemInformation.PrimaryMonitorSize.Height)
-                                    .ToString() + " " + userEvent2 + " " +
-                                CheckValueInTextBox(textBoxWaitMilliseconds, 1000 * 60 * 60 * 24).ToString());
+                                    SystemInformation.PrimaryMonitorSize.Height) + " " + userEvent2 + " " +
+                                CheckValueInTextBox(textBoxWaitMilliseconds, 1000 * 60 * 60 * 24));
                         }
                     }
 
@@ -717,45 +686,41 @@ namespace SmartCursor
         {
             if (listBoxScript.SelectedItem != null)
             {
-                int count = 0;
-                int index;
-                if (int.TryParse(textBoxDoCycle.Text, out count))
+                if (int.TryParse(textBoxDoCycle.Text, out var count))
                 {
                     if (!checkBoxSelectionMode.Checked)
-                        for (int i = 0; i < count; i++)
+                        for (var i = 0; i < count; i++)
                         {
-                            index = listBoxScript.Items.IndexOf(listBoxScript.SelectedItem);
+                            var index = listBoxScript.Items.IndexOf(listBoxScript.SelectedItem);
                             buttonAddToScript_Click(sender, e);
                             listBoxScript.SelectedItem = listBoxScript.Items[index + 1];
                         }
                     else
                     {
-                        ListBox.SelectedObjectCollection sc = new ListBox.SelectedObjectCollection(listBoxScript);
-                        if (CheckCollection(sc) && count > 0)
+                        var sc = new ListBox.SelectedObjectCollection(listBoxScript);
+                        if (!CheckCollection(sc) || count <= 0) return;
+                        var ls = new List<string>();
+                        var i = 0;
+                        while (i <= lastIndex)
                         {
-                            List<string> ls = new List<string>();
-                            int i = 0;
-                            while (i <= lastIndex)
-                            {
-                                ls.Add(listBoxScript.Items[i].ToString());
-                                i++;
-                            }
-                            for (i = 0; i < count - 1; i++)
-                            {
-                                foreach (var s in sc)
-                                    ls.Add(s.ToString());
-                            }
-                            i = lastIndex + 1;
-                            while (i < listBoxScript.Items.Count)
-                            {
-                                ls.Add(listBoxScript.Items[i].ToString());
-                                i++;
-                            }
-                            listBoxScript.Items.Clear();
-                            foreach (var s in ls)
-                                listBoxScript.Items.Add(s);
-                            ls.Clear();
+                            ls.Add(listBoxScript.Items[i].ToString());
+                            i++;
                         }
+                        for (i = 0; i < count - 1; i++)
+                        {
+                            foreach (var s in sc)
+                                ls.Add(s.ToString());
+                        }
+                        i = lastIndex + 1;
+                        while (i < listBoxScript.Items.Count)
+                        {
+                            ls.Add(listBoxScript.Items[i].ToString());
+                            i++;
+                        }
+                        listBoxScript.Items.Clear();
+                        foreach (var s in ls)
+                            listBoxScript.Items.Add(s);
+                        ls.Clear();
                     }
                 }
                 else
@@ -771,20 +736,20 @@ namespace SmartCursor
 
         private bool CheckCollection(ListBox.SelectedObjectCollection sysCol)
         {
-            bool res = true;
-            this.lastIndex = -1;
-            int i = 0;
+            var res = true;
+            lastIndex = -1;
+            var i = 0;
             while (i < listBoxScript.Items.Count && res)
             {
                 if (sysCol.Contains(listBoxScript.Items[i]))
                 {
-                    if (this.lastIndex == -1)
-                        this.lastIndex = i;
+                    if (lastIndex == -1)
+                        lastIndex = i;
                     else
                     {
-                        if (i != this.lastIndex + 1)
+                        if (i != lastIndex + 1)
                             res = false;
-                        this.lastIndex = i;
+                        lastIndex = i;
                     }
                 }
                 i++;
@@ -798,8 +763,8 @@ namespace SmartCursor
             if (listBoxScript.SelectedItems.Count == 1)
             {
                 checkBoxSelectionMode.Checked = true;
-                int index = 0;
-                string currentString = listBoxScript.SelectedItem.ToString();
+                var index = 0;
+                var currentString = listBoxScript.SelectedItem.ToString();
                 listBoxScript.SelectedItems.Clear();
                 while (index != -1 && index < listBoxScript.Items.Count)
                 {
